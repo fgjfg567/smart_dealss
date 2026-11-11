@@ -1,0 +1,10 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "public": {
+      ".read": true,
+      ".write": "auth != null && auth.uid === 'RGvR8OB94WXF2p3Y9vZ35eJR2IJ3'"
+    }
+  }
+}

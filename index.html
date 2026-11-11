@@ -1,0 +1,293 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>سمارت ديلز — لوحة التحكم</title>
+<style>
+  :root{--p:#5b5bd6;--v:#8b5cf6;--soft:#eeedff;--bg:#f4f5fb;--card:#fff;--text:#14142b;--muted:#6e6e8a;--red:#e11d48;--border:#e6e8f2;--mint:#12b886}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Tahoma,sans-serif;background:var(--bg);color:var(--text)}
+  header{background:linear-gradient(135deg,var(--p),var(--v));color:#fff;padding:16px;display:flex;justify-content:space-between;align-items:center;border-radius:0 0 22px 22px}
+  header h1{font-size:18px;margin:0}
+  main{max-width:780px;margin:0 auto;padding:14px}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:14px;box-shadow:0 4px 16px rgba(20,20,43,.05)}
+  h2{font-size:16px;margin:0 0 10px}
+  label{display:block;font-size:13px;color:var(--muted);margin:10px 0 4px}
+  input,select,textarea{width:100%;padding:11px;border:1px solid #cfd2e6;border-radius:10px;font-size:15px;font-family:inherit;background:#fff}
+  textarea{min-height:70px}
+  .row{display:flex;gap:8px}.row>*{flex:1}
+  button{border:0;border-radius:12px;padding:11px 16px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit}
+  .primary{background:linear-gradient(135deg,var(--p),var(--v));color:#fff}.danger{background:#ffe4ea;color:var(--red)}.ghost{background:#fff;color:var(--p);border:1px solid var(--border)}
+  .tabs{display:flex;gap:6px;margin-bottom:14px;overflow:auto}
+  .tab{background:#fff;color:var(--text);border:1px solid var(--border);white-space:nowrap;border-radius:18px}
+  .tab.on{background:var(--p);color:#fff;border-color:var(--p)}
+  .item{display:flex;justify-content:space-between;align-items:center;gap:10px;border:1px solid var(--border);border-radius:12px;padding:10px;margin-top:8px}
+  .item b{display:block}.item small{color:var(--muted);word-break:break-all;display:block}
+  .code{font-family:monospace;background:var(--soft);border:1px dashed var(--v);padding:2px 8px;border-radius:6px}
+  .toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#14142b;color:#fff;padding:10px 18px;border-radius:20px;display:none;z-index:9;max-width:92%;text-align:center}
+  .warn{background:#fff7e6;border:1px solid #f5a524;padding:10px;border-radius:10px;font-size:13px;margin:8px 0}
+  .bad{background:#ffe4ea;border-color:var(--red)}
+  .timerbox{background:linear-gradient(135deg,var(--p),var(--v));color:#fff;border-radius:14px;padding:12px;text-align:center;margin-top:10px}
+  .timerbox .d{font-size:28px;font-weight:700}
+  .tag{display:inline-block;background:var(--soft);color:var(--p);border-radius:8px;padding:1px 8px;font-size:12px}
+  [hidden]{display:none!important}
+</style>
+</head>
+<body>
+<header><h1>سمارت ديلز — لوحة التحكم</h1><button class="ghost" id="logoutBtn" hidden>خروج</button></header>
+<main>
+
+<section id="login" class="card">
+  <h2>تسجيل دخول المشرف</h2>
+  <div class="warn">الحساب يُنشأ مرة واحدة من لوحة Firebase (انظر README) — لا يوجد تسجيل جديد من هنا.</div>
+  <label>Firebase Web API Key</label><input id="apiKey" dir="ltr" placeholder="AIza...">
+  <label>رابط قاعدة البيانات (Realtime Database URL)</label><input id="dbUrl" dir="ltr" placeholder="https://xxxx-default-rtdb.firebaseio.com">
+  <label>البريد الإلكتروني</label><input id="email" type="email" dir="ltr">
+  <label>كلمة المرور</label><input id="password" type="password" dir="ltr">
+  <p><button class="primary" id="loginBtn">دخول</button></p>
+</section>
+
+<section id="app" hidden>
+  <div class="tabs">
+    <button class="tab on" data-tab="coupons">الكوبونات</button>
+    <button class="tab" data-tab="hot">منتجات مميزة</button>
+    <button class="tab" data-tab="offers">العروض</button>
+    <button class="tab" data-tab="settings">الإعدادات</button>
+  </div>
+
+  <div id="tab-coupons">
+    <div class="card">
+      <h2>مؤقت «كوبون قادم»</h2>
+      <label>نص الرسالة</label><input id="timerText" value="كوبون قادم في">
+      <div class="row">
+        <div><label>المدة</label><input id="timerNum" type="number" min="1" value="1"></div>
+        <div><label>الوحدة</label><select id="timerUnit"><option value="60000">دقيقة</option><option value="3600000" selected>ساعة</option></select></div>
+      </div>
+      <p><button class="primary" id="timerSet">تفعيل المؤقت</button> <button class="danger" id="timerDel">حذف المؤقت</button></p>
+      <div id="timerInfo"></div>
+    </div>
+    <div class="card">
+      <h2>إضافة كوبون</h2>
+      <label>اسم الكوبون / المناسبة (يكتبه المشرف فقط)</label><input id="cName" placeholder="مثال: خصم رمضان">
+      <label>نص الكوبون</label><input id="cCode" dir="ltr" placeholder="SAVE10">
+      <div class="row">
+        <div><label>مدة الصلاحية</label><select id="cUnit"><option value="0">بدون وقت محدد (سينتهي قريباً)</option><option value="60000">دقائق</option><option value="3600000">ساعات</option><option value="86400000" selected>أيام</option></select></div>
+        <div><label>العدد</label><input id="cNum" type="number" min="1" value="7"></div>
+      </div>
+      <small>عند انتهاء المدة يختفي الكوبون من التطبيق تلقائياً ويُحذف من القاعدة عند فتح هذه اللوحة. إن لم تحدد مدة يظهر للمستخدم «سينتهي قريباً».</small>
+      <p><button class="primary" id="cAdd">إضافة الكوبون</button></p>
+    </div>
+    <div class="card"><h2>الكوبونات الحالية</h2><div id="cList"></div></div>
+  </div>
+
+  <div id="tab-hot" hidden>
+    <div class="card">
+      <h2>إضافة منتج مميز (يظهر في الرئيسية تحت «عروض قوية»)</h2>
+      <label>اسم المنتج</label><input id="hTitle" placeholder="مثال: سماعات لاسلكية ...">
+      <label>ملاحظة العرض (اختياري)</label><input id="hNote" placeholder="مثال: خصم 40%">
+      <label>رابط المنتج على أمازون (الرابط الكامل من amazon.sa)</label><input id="hUrl" dir="ltr" placeholder="https://www.amazon.sa/dp/XXXXXXXXXX">
+      <label>رابط صورة المنتج (اختياري — https)</label><input id="hImg" dir="ltr" placeholder="https://...">
+      <p><button class="primary" id="hAdd">إضافة المنتج</button></p>
+      <small>يُنظَّف الرابط تلقائياً ويُضاف إليه معرّف التتبع الخاص بك داخل التطبيق.</small>
+    </div>
+    <div class="card"><h2>المنتجات الحالية</h2><div id="hList"></div></div>
+  </div>
+
+  <div id="tab-offers" hidden>
+    <div class="card">
+      <h2>إضافة عرض</h2>
+      <label>نوع العرض</label><textarea id="oTitle" placeholder="مثال: اشترِ 1 واحصل على الثاني مجاناً"></textarea>
+      <label>رابط صفحة العرض (من amazon.sa)</label><input id="oUrl" dir="ltr" placeholder="https://www.amazon.sa/...">
+      <p><button class="primary" id="oAdd">إضافة العرض</button></p>
+    </div>
+    <div class="card"><h2>العروض الحالية</h2><div id="oList"></div></div>
+  </div>
+
+  <div id="tab-settings" hidden>
+    <div class="card">
+      <h2>رابط التسويق بالعمولة (Tracking ID)</h2>
+      <div class="warn bad" id="tagWarn" hidden>لم تُضبط بعد — لن تُحتسب لك عمولة حتى تحفظ معرّف التتبع.</div>
+      <label>الصق أحد روابطك التسويقية (يحتوي tag=...) أو اكتب معرّف التتبع مباشرة</label>
+      <input id="sLink" dir="ltr" placeholder="https://www.amazon.sa/dp/XXXXXXXXXX?tag=smartdeals-21  أو  smartdeals-21">
+      <div id="tagPreview" style="margin-top:6px"></div>
+      <small>يُستخرج المعرّف تلقائياً ويُستخدم لتوليد كل روابط المنتجات داخل التطبيق بصيغة كاملة (بدون اختصار). لا تستخدم روابط amzn.to لأن أمازون قد تحجبها.</small>
+      <p><button class="primary" id="sTagSave">حفظ المعرّف</button></p>
+    </div>
+    <div class="card">
+      <h2>إعدادات التطبيق</h2>
+      <label>طريقة البحث في التطبيق</label>
+      <select id="sMode"><option value="app">داخل التطبيق (نتائج بالاسم والصورة)</option><option value="link">فتح أمازون مباشرة برابط عمولتي (بدون جلب نتائج)</option></select>
+      <label><input type="checkbox" id="sPrices" style="width:auto"> إظهار الأسعار (غير مُوصى به)</label>
+      <div class="warn bad">الأسعار مخفية افتراضياً التزاماً بسياسة أمازون. لا تُفعّل هذا الخيار إلا إذا كان مصدر الأسعار مسموحاً به في برنامجك.</div>
+      <label>إعلان أعلى الصفحة الرئيسية (اتركه فارغاً لإخفائه)</label><textarea id="sAnn"></textarea>
+      <label>رابط قناة التنبيهات (تيليجرام/واتساب — اختياري)</label><input id="sChan" dir="ltr" placeholder="https://t.me/...">
+      <label>وسيلة التواصل</label><input id="sContact">
+      <label>رابط سياسة الخصوصية</label><input id="sPriv" dir="ltr" placeholder="https://...">
+      <p><button class="primary" id="sSave">حفظ الإعدادات</button></p>
+    </div>
+  </div>
+</section>
+</main>
+<div class="toast" id="toast"></div>
+
+<script>
+const $ = id => document.getElementById(id);
+const LS = window.localStorage;
+let S = {key: LS.apiKey || '', db: (LS.dbUrl || '').replace(/\/$/, ''), idToken: '', refresh: '', offset: 0};
+let timerData = null;
+const SHORT = ['amzn.to','a.co','amzn.eu','amzn.asia','amzn.me'];
+const TS = {'.sv':'timestamp'};
+
+function toast(m){const t=$('toast');t.textContent=m;t.style.display='block';clearTimeout(toast.h);toast.h=setTimeout(()=>t.style.display='none',3200)}
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function serverNow(){return Date.now()+S.offset}
+
+// ---------- تنظيف روابط أمازون (فقط amazon.sa، بدون روابط مختصرة، بدون أي tag قديم)
+function cleanAmazonUrl(raw, needProduct){
+  let u; try{u=new URL(String(raw||'').trim())}catch(e){return {error:'رابط غير صحيح'}}
+  const h=u.hostname.toLowerCase();
+  if(SHORT.includes(h)) return {error:'لا تستخدم الروابط المختصرة (amzn.to). افتح المنتج على amazon.sa وانسخ الرابط الكامل من شريط العنوان.'};
+  if(!/(^|\.)amazon\.sa$/.test(h)) return {error:'الروابط المقبولة هي روابط amazon.sa فقط'};
+  const m=u.pathname.match(/\/(?:dp|gp\/product)\/([A-Z0-9]{10})/i);
+  if(m) return {url:'https://www.amazon.sa/dp/'+m[1].toUpperCase(), asin:m[1].toUpperCase()};
+  if(needProduct) return {error:'هذا ليس رابط منتج (يجب أن يحتوي /dp/ ورمز المنتج)'};
+  const drop=/^(tag|ref|ref_|pd_rd|pf_rd|qid|sr|crid|sprefix|content-id|linkcode|linkid|ascsubtag|psc|th)/i;
+  const p=new URLSearchParams(); [...u.searchParams].forEach(([k,v])=>{ if(!drop.test(k)) p.append(k,v) });
+  const q=p.toString();
+  return {url:'https://www.amazon.sa'+u.pathname+(q?'?'+q:'')};
+}
+function extractTag(input){
+  input=String(input||'').trim(); if(!input) return {tag:''};
+  if(/^https?:\/\//i.test(input)){
+    let u; try{u=new URL(input)}catch(e){return {error:'رابط غير صحيح'}}
+    if(SHORT.includes(u.hostname.toLowerCase())) return {error:'هذا رابط مختصر، لا يمكن استخراج المعرّف منه. الصق الرابط الكامل أو اكتب المعرّف مباشرة.'};
+    const t=u.searchParams.get('tag'); return t? {tag:t} : {error:'لا يوجد tag=... في هذا الرابط'};
+  }
+  return /^[A-Za-z0-9_-]{3,40}$/.test(input) ? {tag:input} : {error:'صيغة المعرّف غير صحيحة'};
+}
+function ttlText(c){
+  if(!(c.ttl_ms>0)) return 'بدون وقت محدد (سينتهي قريباً)';
+  const left=c.ts+c.ttl_ms-serverNow(); if(left<=0) return 'منتهٍ';
+  const m=Math.floor(left/60000), d=Math.floor(m/1440), h=Math.floor(m%1440/60);
+  return 'ينتهي بعد '+(d? d+' يوم'+(h?' و'+h+' ساعة':'') : h? h+' ساعة'+(m%60?' و'+(m%60)+' دقيقة':'') : Math.max(m,1)+' دقيقة');
+}
+
+async function api(method, path, body){
+  const url = `${S.db}/public${path ? '/' + path : ''}.json` + (method==='GET' ? '' : `?auth=${encodeURIComponent(S.idToken)}`);
+  const r = await fetch(url, {method, headers:{'Content-Type':'application/json'}, body: body===undefined?undefined:JSON.stringify(body)});
+  if (r.status===401 || r.status===403) throw new Error('غير مصرّح: تأكد من قواعد Firebase وأن حسابك هو المشرف.');
+  if (!r.ok) throw new Error('خطأ ' + r.status);
+  const d = r.headers.get('Date'); if (d) S.offset = new Date(d).getTime() - Date.now();
+  return r.json();
+}
+
+async function login(){
+  S.key = $('apiKey').value.trim(); S.db = $('dbUrl').value.trim().replace(/\/$/,'');
+  if(!S.key||!S.db) return toast('أدخل API Key ورابط قاعدة البيانات');
+  try{
+    const r = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${S.key}`,
+      {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:$('email').value.trim(),password:$('password').value,returnSecureToken:true})});
+    const d = await r.json();
+    if(!r.ok) throw new Error(d.error?.message==='INVALID_LOGIN_CREDENTIALS'?'بيانات الدخول غير صحيحة':(d.error?.message||'فشل الدخول'));
+    S.idToken = d.idToken; S.refresh = d.refreshToken;
+    LS.apiKey = S.key; LS.dbUrl = S.db; LS.email = $('email').value.trim();
+    $('login').hidden = true; $('app').hidden = false; $('logoutBtn').hidden = false;
+    setInterval(refreshToken, 50*60*1000);
+    await loadAll();
+  }catch(e){toast(e.message)}
+}
+async function refreshToken(){
+  try{
+    const r = await fetch(`https://securetoken.googleapis.com/v1/token?key=${S.key}`,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:`grant_type=refresh_token&refresh_token=${encodeURIComponent(S.refresh)}`});
+    const d = await r.json(); if(d.id_token){S.idToken=d.id_token;S.refresh=d.refresh_token}
+  }catch(e){}
+}
+
+async function loadAll(){
+  const data = (await api('GET','')) || {};
+  const rows = o => Object.entries(o||{}).map(([id,v])=>({id,...v})).sort((a,b)=>(b.ts||0)-(a.ts||0));
+  // حذف الكوبونات المنتهية تلقائياً من القاعدة
+  const expired = rows(data.coupons).filter(c=>c.ttl_ms>0 && c.ts && c.ts+c.ttl_ms<=serverNow());
+  if(expired.length){ for(const c of expired) await api('DELETE','coupons/'+c.id); toast(`تم حذف ${expired.length} كوبون منتهي الصلاحية`); return loadAll(); }
+  $('cList').innerHTML = rows(data.coupons).map(c=>`<div class="item"><div><b>${esc(c.name||'بدون اسم')} <span class="code">${esc(c.code)}</span></b><small>${esc(ttlText(c))}</small></div><button class="danger" onclick="delItem('coupons','${c.id}')">حذف</button></div>`).join('') || '<small>لا توجد كوبونات.</small>';
+  $('hList').innerHTML = rows(data.hot).map(h=>`<div class="item"><div><b>${esc(h.title)} ${h.note?`<span class="tag">${esc(h.note)}</span>`:''}</b><small>${esc(h.url)}</small></div><button class="danger" onclick="delItem('hot','${h.id}')">حذف</button></div>`).join('') || '<small>لا توجد منتجات مميزة.</small>';
+  $('oList').innerHTML = rows(data.offers).map(o=>`<div class="item"><div><b>${esc(o.title)}</b><small>${esc(o.url)}</small></div><button class="danger" onclick="delItem('offers','${o.id}')">حذف</button></div>`).join('') || '<small>لا توجد عروض.</small>';
+  timerData = (data.timer && data.timer.created) ? data.timer : null; renderTimer();
+  const c = data.config || {};
+  $('sLink').value = c.affiliate_tag||''; $('sMode').value = c.search_mode||'app'; $('sPrices').checked = c.show_prices===true;
+  $('sAnn').value = c.announcement||''; $('sChan').value = c.channel_url||''; $('sContact').value = c.contact||''; $('sPriv').value = c.privacy_url||'';
+  $('tagWarn').hidden = !!(c.affiliate_tag||'').trim(); previewTag();
+}
+function previewTag(){
+  const r=extractTag($('sLink').value), box=$('tagPreview');
+  if(r.error) box.innerHTML=`<span class="warn bad">${esc(r.error)}</span>`;
+  else if(r.tag) box.innerHTML=`المعرّف المستخرج: <span class="tag">${esc(r.tag)}</span>`+(/-21$/.test(r.tag)?'':' <small>(عادةً ينتهي معرّف amazon.sa بـ -21 — تأكد منه)</small>');
+  else box.innerHTML='';
+}
+$('sLink').oninput = previewTag;
+
+function renderTimer(){
+  const box = $('timerInfo');
+  if(!timerData){box.innerHTML='<small>لا يوجد مؤقت فعّال.</small>';return}
+  const left = timerData.created + timerData.delay_ms - serverNow();
+  if(left<=0){box.innerHTML='<small>انتهى المؤقت (لا يظهر للمستخدمين). يمكنك حذفه أو تفعيل جديد.</small>';return}
+  const s=Math.floor(left/1000), p=n=>String(n).padStart(2,'0');
+  box.innerHTML=`<div class="timerbox">${esc(timerData.text)}<div class="d">${p(Math.floor(s/3600))}:${p(Math.floor(s%3600/60))}:${p(s%60)}</div></div>`;
+}
+setInterval(renderTimer,1000);
+
+async function guard(fn){try{await fn()}catch(e){toast(e.message||'حدث خطأ')}}
+
+$('timerSet').onclick = () => guard(async()=>{
+  const n = Number($('timerNum').value), unit = Number($('timerUnit').value);
+  if(!(n>0)) return toast('أدخل مدة صحيحة');
+  await api('PUT','timer',{text:$('timerText').value.trim()||'كوبون قادم في', delay_ms:n*unit, created:TS});
+  toast('تم تفعيل المؤقت'); await loadAll();
+});
+$('timerDel').onclick = () => guard(async()=>{await api('DELETE','timer'); toast('تم حذف المؤقت'); await loadAll()});
+
+$('cAdd').onclick = () => guard(async()=>{
+  const code=$('cCode').value.trim(), name=$('cName').value.trim(), unit=Number($('cUnit').value), n=Number($('cNum').value);
+  if(!code) return toast('أدخل نص الكوبون');
+  const item={name,code,ts:TS}; if(unit>0){ if(!(n>0)) return toast('أدخل عدداً صحيحاً لمدة الصلاحية'); item.ttl_ms=n*unit; }
+  await api('POST','coupons',item); $('cCode').value='';$('cName').value=''; toast('تمت الإضافة'); await loadAll();
+});
+
+$('hAdd').onclick = () => guard(async()=>{
+  const title=$('hTitle').value.trim(), note=$('hNote').value.trim(), img=$('hImg').value.trim();
+  if(!title) return toast('أدخل اسم المنتج');
+  const u=cleanAmazonUrl($('hUrl').value,true); if(u.error) return toast(u.error);
+  if(img && !/^https:\/\//i.test(img)) return toast('رابط الصورة يجب أن يبدأ بـ https://');
+  const item={title,url:u.url,ts:TS}; if(note) item.note=note; if(img) item.image=img;
+  await api('POST','hot',item); ['hTitle','hNote','hUrl','hImg'].forEach(i=>$(i).value=''); toast('تمت إضافة المنتج'); await loadAll();
+});
+
+$('oAdd').onclick = () => guard(async()=>{
+  const title=$('oTitle').value.trim(); if(!title) return toast('أدخل نوع العرض');
+  const u=cleanAmazonUrl($('oUrl').value,false); if(u.error) return toast(u.error);
+  await api('POST','offers',{title,url:u.url,ts:TS}); $('oTitle').value='';$('oUrl').value=''; toast('تمت الإضافة'); await loadAll();
+});
+
+window.delItem = (kind,id) => { if(confirm('حذف هذا العنصر؟')) guard(async()=>{await api('DELETE',`${kind}/${id}`); toast('تم الحذف'); await loadAll()}) };
+
+$('sTagSave').onclick = () => guard(async()=>{
+  const r=extractTag($('sLink').value); if(r.error) return toast(r.error); if(!r.tag) return toast('أدخل رابطاً تسويقياً أو معرّف التتبع');
+  await api('PATCH','config',{affiliate_tag:r.tag}); toast('تم حفظ معرّف التتبع: '+r.tag); await loadAll();
+});
+$('sSave').onclick = () => guard(async()=>{
+  await api('PATCH','config',{search_mode:$('sMode').value, show_prices:$('sPrices').checked, announcement:$('sAnn').value.trim(),
+    channel_url:$('sChan').value.trim(), contact:$('sContact').value.trim(), privacy_url:$('sPriv').value.trim()});
+  toast('تم حفظ الإعدادات'); await loadAll();
+});
+
+document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('on',x===b));
+  ['coupons','hot','offers','settings'].forEach(t=>$('tab-'+t).hidden = (t!==b.dataset.tab));
+});
+$('loginBtn').onclick = login;
+$('logoutBtn').onclick = () => location.reload();
+$('apiKey').value = LS.apiKey||''; $('dbUrl').value = LS.dbUrl||''; $('email').value = LS.email||'';
+</script>
+</body>
+</html>

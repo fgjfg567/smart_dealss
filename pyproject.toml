@@ -1,0 +1,20 @@
+[project]
+name = "app"
+version = "1.0.0"
+description = "Smart Deals"
+requires-python = ">=3.10"
+dependencies = [
+  "flet==0.28.3",
+  "requests",
+  "beautifulsoup4",
+]
+
+[tool.flet]
+# معرّف الحزمة على أندرويد = org + "." + name  ←  com.smartdeals.app  (لا يمكن تغييره بعد النشر على Google Play)
+org = "com.smartdeals"
+product = "Smart Deals"
+company = "Smart Deals"
+copyright = ""
+
+[tool.flet.android.permission]
+"android.permission.INTERNET" = true
